@@ -3,9 +3,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.lang.reflect.Array;
 import java.net.InetSocketAddress;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 public class HTTPServerTest {
@@ -46,24 +44,14 @@ public class HTTPServerTest {
 
                 String bodyInput = buf.toString();
 
-                String thisworkflow = "";
-
-                //Sortierung des Bodys anhand des Skripts zum Aufruf der API
-                String[] requiredWorkflow = bodyInput.split(":");
-                if (requiredWorkflow.length > 0) {
-                    String[] workflowname = requiredWorkflow[1].split("\"");
-                    if (workflowname.length > 0) {
-                        thisworkflow = workflowname[1];
-                    }
-                }
+                String thisworkflow = exchange.getRequestHeaders().getFirst("test");
 // The resulting string is: buf.toString()
 // and the number of BYTES (not utf-8 characters) from the body is: buf.length()
 
-                //Über die URI gibt der Anwender seine gewünschte Methode an
-                String eingabe = exchange.getRequestURI().toString();
 //*************************************************POST***************************************************************
                 if (exchange.getRequestMethod().equals("POST")) {
                     String ausgabe;
+                    System.out.println(exchange.getRequestHeaders().getFirst("test"));
                     boolean gefunden = false;
                     for (int i = 0; i < meineWorkflows.size(); i++) {
                         String actualWorkflow = meineWorkflows.get(i).getWorkflowname();
@@ -74,16 +62,20 @@ public class HTTPServerTest {
                     }
                     if (gefunden) {
                         ausgabe = "Der Workflow mit dem Namen " + thisworkflow + " wurde gestartet!";
-                        exchange.sendResponseHeaders(201, ausgabe.length());
+                        byte[] antwort = ausgabe.getBytes();
+                        exchange.setAttribute("workflow", ausgabe);
+                        exchange.sendResponseHeaders(200, antwort.length);
                         OutputStream outputStream = exchange.getResponseBody();
-                        outputStream.write(ausgabe.getBytes());
+                        outputStream.write(antwort);
                         outputStream.close();
                         //System.out.println("Gefunden ist " + gefunden);
                     } else {
                         ausgabe = "Der gewünschte Workflow existiert nicht. Haben Sie sich vielleicht vertippt?";
-                        exchange.sendResponseHeaders(404, ausgabe.length());
+                        byte[] antwort = ausgabe.getBytes();
+                        System.out.println(ausgabe.toString());
+                        exchange.sendResponseHeaders(404, antwort.length);
                         OutputStream outputStream = exchange.getResponseBody();
-                        outputStream.write(ausgabe.getBytes());
+                        outputStream.write(antwort);
                         outputStream.close();
                     }
                     System.out.println(ausgabe);
@@ -104,11 +96,6 @@ public class HTTPServerTest {
                     }
                 }
 //*************************************************STANDARD***********************************************************
-                String s = "<h1> Willkommen bei der Test-API! </h1>";
-                exchange.sendResponseHeaders(200, s.length());
-                OutputStream outputStream = exchange.getResponseBody();
-                outputStream.write(s.getBytes());
-                outputStream.close();
             }
         });
         httpsServer.start();
