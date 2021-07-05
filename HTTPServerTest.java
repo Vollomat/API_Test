@@ -81,7 +81,7 @@ public class HTTPServerTest {
                         //System.out.println("Gefunden ist " + gefunden);
                     } else {
                         ausgabe = "Der gewünschte Workflow existiert nicht. Haben Sie sich vielleicht vertippt?";
-                        exchange.sendResponseHeaders(201, ausgabe.length());
+                        exchange.sendResponseHeaders(404, ausgabe.length());
                         OutputStream outputStream = exchange.getResponseBody();
                         outputStream.write(ausgabe.getBytes());
                         outputStream.close();
