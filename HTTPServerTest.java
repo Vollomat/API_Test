@@ -9,7 +9,6 @@ import java.util.ArrayList;
 public class HTTPServerTest {
 
     public static ArrayList<Workflow> meineWorkflows = new ArrayList<Workflow>();
-    public static ArrayList<Einloggdaten> alleEinloggdaten = new ArrayList<Einloggdaten>();
 
     public static void addWorkflows() {
         meineWorkflows.add(new Workflow("patrick.test"));
@@ -30,72 +29,59 @@ public class HTTPServerTest {
             @Override
             public void handle(HttpExchange exchange) throws IOException {
 
-                InputStreamReader isr = new InputStreamReader(exchange.getRequestBody(), "utf-8");
-                BufferedReader br = new BufferedReader(isr);
-
-                int b;
-                StringBuilder buf = new StringBuilder(512);
-                while ((b = br.read()) != -1) {
-                    buf.append((char) b);
-                }
-
-                br.close();
-                isr.close();
-
-                String bodyInput = buf.toString();
-
-                String thisworkflow = exchange.getRequestHeaders().getFirst("test");
-// The resulting string is: buf.toString()
-// and the number of BYTES (not utf-8 characters) from the body is: buf.length()
-
+                String thisworkflow = exchange.getRequestHeaders().getFirst("workflowName");
+                String authentifizierung = exchange.getRequestHeaders().getFirst("Authorization");
 //*************************************************POST***************************************************************
-                if (exchange.getRequestMethod().equals("POST")) {
-                    String ausgabe;
-                    System.out.println(exchange.getRequestHeaders().getFirst("test"));
-                    boolean gefunden = false;
-                    for (int i = 0; i < meineWorkflows.size(); i++) {
-                        String actualWorkflow = meineWorkflows.get(i).getWorkflowname();
-                        if (thisworkflow.equals(actualWorkflow)) {
-                            meineWorkflows.get(i).setActive(true);
-                            gefunden = true;
+                if (authentifizierung.equals("Basic YWRtaW46YWRtaW4=")) {
+                    if (exchange.getRequestMethod().equals("POST")) {
+                        String ausgabe;
+                        boolean gefunden = false;
+                        Workflow gefundenerWorkflow = null;
+                        for (int i = 0; i < meineWorkflows.size(); i++) {
+                            String actualWorkflow = meineWorkflows.get(i).getWorkflowname();
+                            if (thisworkflow.equals(actualWorkflow)) {
+                                meineWorkflows.get(i).setActive(true);
+                                gefunden = true;
+                                gefundenerWorkflow = meineWorkflows.get(i);
+                            }
+                        }
+                        if (gefunden) {
+                            ausgabe = new AusgabeObjektPOST(gefundenerWorkflow).jsonErzeugen();
+                            byte[] antwort = ausgabe.getBytes();
+                            exchange.getResponseHeaders().add("Content-Type", "application/json");
+                            exchange.sendResponseHeaders(200, antwort.length);
+                            OutputStream outputStream = exchange.getResponseBody();
+                            outputStream.write(antwort);
+                            outputStream.close();
+                        } else {
+                            ausgabe = new AusgabeObjektPOST(null).jsonErzeugen();
+                            byte[] antwort = ausgabe.getBytes();
+                            exchange.getResponseHeaders().add("Content-Type", "application/json");
+                            exchange.sendResponseHeaders(404, antwort.length);
+                            OutputStream outputStream = exchange.getResponseBody();
+                            outputStream.write(antwort);
+                            outputStream.close();
                         }
                     }
-                    if (gefunden) {
-                        ausgabe = "Der Workflow mit dem Namen " + thisworkflow + " wurde gestartet!";
+//*************************************************GET****************************************************************
+                    if (exchange.getRequestMethod().equals("GET")) {
+                        String ausgabe = "";
+                        for (int i = 0; i < meineWorkflows.size(); i++) {
+                            new AusgabeObjektGET(meineWorkflows.get(i)).jsonErzeugen();
+                            ausgabe = ausgabe + new AusgabeObjektGET(meineWorkflows.get(i)).jsonErzeugen();
+                        }
                         byte[] antwort = ausgabe.getBytes();
-                        exchange.setAttribute("workflow", ausgabe);
+                        exchange.getResponseHeaders().add("Content-Type", "application/json");
                         exchange.sendResponseHeaders(200, antwort.length);
                         OutputStream outputStream = exchange.getResponseBody();
                         outputStream.write(antwort);
                         outputStream.close();
-                        //System.out.println("Gefunden ist " + gefunden);
-                    } else {
-                        ausgabe = "Der gewünschte Workflow existiert nicht. Haben Sie sich vielleicht vertippt?";
-                        byte[] antwort = ausgabe.getBytes();
-                        System.out.println(ausgabe.toString());
-                        exchange.sendResponseHeaders(404, antwort.length);
-                        OutputStream outputStream = exchange.getResponseBody();
-                        outputStream.write(antwort);
-                        outputStream.close();
                     }
-                    System.out.println(ausgabe);
-
-
-//*************************************************GET****************************************************************
-                    if (exchange.getRequestMethod().equals("GET")) {
-                        ausgabe = "Im Moment werden folgende Workflows ausgeführt: ";
-                        for (int i = 0; i < meineWorkflows.size(); i++) {
-                            if (meineWorkflows.get(i).isActive()) {
-                                ausgabe = ausgabe + meineWorkflows.get(i).getWorkflowname() + ", ";
-                            }
-                        }
-                        exchange.sendResponseHeaders(200, ausgabe.length());
-                        OutputStream outputStream = exchange.getResponseBody();
-                        outputStream.write(ausgabe.getBytes());
-                        outputStream.close();
-                    }
+                } else {
+                    String ausgabe = "";
+                    byte[] antwort = ausgabe.getBytes();
+                    exchange.sendResponseHeaders(403, antwort.length);
                 }
-//*************************************************STANDARD***********************************************************
             }
         });
         httpsServer.start();
