@@ -15,7 +15,7 @@ public class AusgabeObjektPOST {
             this.details = "Der Workflow wurde erfolgreich angestossen!";
             this.href = "http://localhost:8080/ae/api/v1/executions";
         } else {
-            this.details = "Der gewünschte Workflow existiert nicht!";
+            this.details = "Der gewuenschte Workflow existiert nicht!";
         }
     }
 
