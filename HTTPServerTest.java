@@ -30,7 +30,6 @@ public class HTTPServerTest {
 
                 String thisworkflow = exchange.getRequestHeaders().getFirst("workflowName");
                 String authentifizierung = exchange.getRequestHeaders().getFirst("Authorization");
-//*************************************************POST***************************************************************
                 if (authentifizierung.equals("Basic YWRtaW46YWRtaW4=")) {
                     if (exchange.getRequestMethod().equals("POST")) {
                         String ausgabe;
@@ -62,7 +61,6 @@ public class HTTPServerTest {
                             outputStream.close();
                         }
                     }
-//*************************************************GET****************************************************************
                     if (exchange.getRequestMethod().equals("GET")) {
                         String ausgabe = "";
                         for (int i = 0; i < meineWorkflows.size(); i++) {
