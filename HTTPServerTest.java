@@ -1,4 +1,5 @@
 import com.sun.net.httpserver.*;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
@@ -29,7 +30,7 @@ public class HTTPServerTest {
 
                 String thisworkflow = exchange.getRequestHeaders().getFirst("workflowName");
                 String authentifizierung = exchange.getRequestHeaders().getFirst("Authorization");
-
+//*************************************************POST***************************************************************
                 if (authentifizierung.equals("Basic YWRtaW46YWRtaW4=")) {
                     if (exchange.getRequestMethod().equals("POST")) {
                         String ausgabe;
@@ -61,7 +62,7 @@ public class HTTPServerTest {
                             outputStream.close();
                         }
                     }
-
+//*************************************************GET****************************************************************
                     if (exchange.getRequestMethod().equals("GET")) {
                         String ausgabe = "";
                         for (int i = 0; i < meineWorkflows.size(); i++) {
@@ -76,12 +77,17 @@ public class HTTPServerTest {
                         outputStream.close();
                     }
                 } else {
-                    String ausgabe = "";
+                    String ausgabe = "Falsche Einloggdaten!";
                     byte[] antwort = ausgabe.getBytes();
                     exchange.sendResponseHeaders(403, antwort.length);
+                    OutputStream outputStream = exchange.getResponseBody();
+                    outputStream.write(antwort);
+                    outputStream.close();
                 }
             }
         });
         httpsServer.start();
+        System.err.println("Server gestartet!");
     }
 }
+
