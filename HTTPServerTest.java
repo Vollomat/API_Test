@@ -22,7 +22,7 @@ public class HTTPServerTest {
         addWorkflows();
 
         //Ein HTTPServer wird initialisiert mit dem Port 8080
-        HttpServer httpsServer = HttpServer.create(new InetSocketAddress(8080), 0);
+        HttpServer httpsServer = HttpServer.create(new InetSocketAddress(8085), 0);
         HttpContext httpContext = httpsServer.createContext("/ae/api/v1/executions");
         httpContext.setHandler(new HttpHandler() {
             @Override
